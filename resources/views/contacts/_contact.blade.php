@@ -1,5 +1,5 @@
 <tr>
-    <th scope="row">{{ $contact->id }}</th>
+    <th scope="row">{{ $contacts->firstItem() + $index }}</th>
     <td>{{ $contact->first_name }}</td>
     <td>{{ $contact->last_name }}</td>
     <td>{{ $contact->email }}</td>
