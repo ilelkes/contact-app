@@ -12,7 +12,8 @@ class CompanyRepository
         $data = [];
         $companies = Company::orderBy('name')->get();
         foreach ($companies as $company) {
-            $data[$company->id] = $company->name . " (" . $company->contacts()->count() . ")";
+            //$data[$company->id] = $company->name . " (" . $company->contacts()->count() . ")";
+            $data[$company->id] = $company->name;
         }
         return $data;
     }
