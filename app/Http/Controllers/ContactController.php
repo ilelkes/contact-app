@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Repositories\CompanyRepository;
-use Illuminate\Http\Request;
 use App\Models\Contact;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use App\Repositories\CompanyRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class ContactController extends Controller
@@ -19,6 +20,12 @@ class ContactController extends Controller
         $contacts = Contact::latest()->where(function ($query) {
             if ($companyId = request()->query("company_id")) {
                 $query->where("company_id", $companyId);
+            }
+        })->where(function ($query) {
+            if ($search = request()->query('search')) {
+                $query->where("first_name", "LIKE", "%{$search}%");
+                $query->orWhere("last_name", "LIKE", "%{$search}%");
+                $query->orWhere("email", "LIKE", "%{$search}%");
             }
         })->paginate(10);
         return view('contacts.index', compact('contacts', 'companies'));
