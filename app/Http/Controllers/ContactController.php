@@ -17,7 +17,11 @@ class ContactController extends Controller
     public function index()
     {
         $companies = $this->company->pluck();
-        $contacts = Contact::latest()->where(function ($query) {
+        $query = Contact::query();
+        if (request()->query('trash')) {
+            $query->onlyTrashed();
+        }
+        $contacts = $query->latest()->where(function ($query) {
             if ($companyId = request()->query("company_id")) {
                 $query->where("company_id", $companyId);
             }
@@ -85,7 +89,32 @@ class ContactController extends Controller
     {
         $contact = Contact::findOrFail($id);
         $contact->delete();
-        return redirect()->route('contacts.index')->with('message', 'Contact has been removed successfully');
-        //return back()->with('message', 'Contact has been removed successfully');
+        $redirect = request()->query('redirect');
+        return ($redirect ? redirect()->route($redirect) : back())
+            ->with('message', 'Contact has been moved to trash')
+            ->with('undoRoute', $this->getUndoRoute('contacts.restore', $contact));
+    }
+
+    public function restore($id)
+    {
+        $contact = Contact::onlyTrashed()->findOrFail($id);
+        $contact->restore();
+        return back()
+            ->with('message', 'Contact has been restored from trash')
+            ->with('undoRoute', $this->getUndoRoute('contacts.destroy', $contact));
+    }
+
+    protected function getUndoRoute($name, $resource)
+    {
+        return request()->missing('undo') ? route($name, [$resource->id, 'undo=>true']) : null;
+    }
+
+    public function forceDelete($id)
+    {
+        $contact = Contact::onlyTrashed()->findOrFail($id);
+        $contact->forceDelete();
+        //return redirect()->route('contacts.index')
+        return back()
+            ->with('message', 'Contact has been removed permanently');
     }
 }
