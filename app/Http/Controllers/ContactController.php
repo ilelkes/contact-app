@@ -17,11 +17,13 @@ class ContactController extends Controller
     public function index()
     {
         $companies = $this->company->pluck();
+
         $contacts = Contact::allowedTrash()
-            ->allowedSorts('first_name')
+            ->allowedSorts(['first_name', 'last_name', 'email'], "-id")
             ->allowedFilters('company_id')
             ->allowedSearch('first_name', 'last_name', 'email')
             ->paginate(10);
+
         return view('contacts.index', compact('contacts', 'companies'));
     }
 
