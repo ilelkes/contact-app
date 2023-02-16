@@ -17,21 +17,11 @@ class ContactController extends Controller
     public function index()
     {
         $companies = $this->company->pluck();
-        $query = Contact::query();
-        if (request()->query('trash')) {
-            $query->onlyTrashed();
-        }
-        $contacts = $query->latest()->where(function ($query) {
-            if ($companyId = request()->query("company_id")) {
-                $query->where("company_id", $companyId);
-            }
-        })->where(function ($query) {
-            if ($search = request()->query('search')) {
-                $query->where("first_name", "LIKE", "%{$search}%");
-                $query->orWhere("last_name", "LIKE", "%{$search}%");
-                $query->orWhere("email", "LIKE", "%{$search}%");
-            }
-        })->paginate(10);
+        $contacts = Contact::allowedTrash()
+            ->allowedSorts('first_name')
+            ->allowedFilters('company_id')
+            ->allowedSearch('first_name', 'last_name', 'email')
+            ->paginate(10);
         return view('contacts.index', compact('contacts', 'companies'));
     }
 
@@ -66,7 +56,6 @@ class ContactController extends Controller
     {
         $companies = $this->company->pluck();
         $contact = Contact::findOrFail($id);
-        //return view('contacts.edit')->with('contact', $contact)->with('companies', $companies);
         return view('contacts.edit', compact('companies', 'contact'));
     }
 
