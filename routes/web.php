@@ -7,7 +7,9 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ContactNoteController;
+use App\Http\Controllers\Settings\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,19 +23,23 @@ use App\Http\Controllers\ContactNoteController;
 */
 
 Route::get('/', WelcomeController::class);
-Route::resource('/contacts', ContactController::class);
-Route::delete('/contacts/{contact}/restore', [ContactController::class, 'restore'])
-    ->name('contacts.restore')
-    ->withTrashed();
-Route::delete('/contacts/{contact}/force-delete', [ContactController::class, 'forceDelete'])
-    ->name('contacts.force-delete')
-    ->withTrashed();
-Route::resource('/companies', CompanyController::class);
-Route::resources([
-    '/tags' => TagController::class,
-    '/tasks' => TaskController::class
-]);
-Route::resource('/contacts.notes', ContactNoteController::class)->shallow();
-Route::resource('/activities', ActivityController::class)->parameters([
-    'activities' => 'active'
-]);
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', DashboardController::class);
+    Route::get('/settings/profile-information', ProfileController::class)->name('user-profile-information.edit');
+    Route::resource('/contacts', ContactController::class);
+    Route::delete('/contacts/{contact}/restore', [ContactController::class, 'restore'])
+        ->name('contacts.restore')
+        ->withTrashed();
+    Route::delete('/contacts/{contact}/force-delete', [ContactController::class, 'forceDelete'])
+        ->name('contacts.force-delete')
+        ->withTrashed();
+    Route::resource('/companies', CompanyController::class);
+    Route::resources([
+        '/tags' => TagController::class,
+        '/tasks' => TaskController::class
+    ]);
+    Route::resource('/contacts.notes', ContactNoteController::class)->shallow();
+    Route::resource('/activities', ActivityController::class)->parameters([
+        'activities' => 'active'
+    ]);
+});
