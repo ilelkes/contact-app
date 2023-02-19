@@ -2,27 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use App\Models\Contact;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\ContactRequest;
-use App\Repositories\CompanyRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class ContactController extends Controller
 {
-    public function __construct(protected CompanyRepository $company)
+    protected function userCompanies()
     {
+        return Company::forUser(auth()->user())->orderBy('name')->pluck('name', 'id');
     }
 
     public function index()
     {
-        $companies = $this->company->pluck();
+        $companies = $this->userCompanies();
 
         $contacts = Contact::allowedTrash()
             ->allowedSorts(['first_name', 'last_name', 'email'], "-id")
             ->allowedFilters('company_id')
             ->allowedSearch('first_name', 'last_name', 'email')
+            ->forUser(auth()->user())
             ->paginate(10);
 
         return view('contacts.index', compact('contacts', 'companies'));
@@ -30,14 +32,14 @@ class ContactController extends Controller
 
     public function create()
     {
-        $companies = $this->company->pluck();
+        $companies = $this->userCompanies();
         $contact = new Contact();
         return view('contacts.create', compact('companies', 'contact'));
     }
 
     public function store(ContactRequest $request)
     {
-        Contact::create($request->all());
+        $request->user()->contacts()->create($request->all());
         return redirect()->route('contacts.index')->with('message', 'Contact has been added successfully');
     }
 
@@ -48,7 +50,7 @@ class ContactController extends Controller
 
     public function edit(Contact $contact)
     {
-        $companies = $this->company->pluck();
+        $companies = $this->userCompanies();
         return view('contacts.edit', compact('companies', 'contact'));
     }
 
